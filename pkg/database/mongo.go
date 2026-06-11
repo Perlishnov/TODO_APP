@@ -8,12 +8,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/Perlishnov/TODO_APP/internal/config"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 
-func newMongoConnection( config *config.Config ,logger *logrus.Logger) (*mongo.Database, error)  {
+func NewMongoConnection( config *config.Config ,logger *logrus.Logger) (*mongo.Database, error)  {
 	uri := config.ConnectionUri
 
 	if uri == "" {
@@ -26,7 +26,7 @@ func newMongoConnection( config *config.Config ,logger *logrus.Logger) (*mongo.D
     }
 
 	clientOps := options.Client().ApplyURI(uri)
-	client, err := mongo.Connect(context.Background(),clientOps)
+	client, err := mongo.Connect(clientOps)
 
 	if err != nil {
 		return nil, fmt.Errorf("")
@@ -41,7 +41,3 @@ func newMongoConnection( config *config.Config ,logger *logrus.Logger) (*mongo.D
 	logger.Info("Connected to MongoDB")
 	return client.Database(dbName), nil
 }
-
-// func InitializeIndexes(db *mongo.Database){
-// 	db.RunCommand()
-// }

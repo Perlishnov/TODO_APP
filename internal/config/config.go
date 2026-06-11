@@ -15,7 +15,7 @@ type Config struct{
 	LogLevel 			logrus.Level
 }
 
-func load() (*Config, error)  {
+func Load() (*Config, error)  {
 	_ = godotenv.Load()
 
 	level, err := logrus.ParseLevel(getEnv("LOG_LEVEL", "info"))

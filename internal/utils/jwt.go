@@ -14,6 +14,12 @@ type JWTUtil struct{
 	exp time.Duration
 }
 
+// JWTService defines the methods needed for JWT operations
+type JWTService interface {
+    GenerateToken(user models.User) (string, error)
+    ValidateToken(token string) (*Claims, error)
+}
+
 func NewJWTUtil(cfg *config.Config) *JWTUtil  {
 	return &JWTUtil{
 		secret: []byte(cfg.JWTSecret),

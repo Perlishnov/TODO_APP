@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Perlishnov/TODO_APP/internal/models"
 	"github.com/Perlishnov/TODO_APP/internal/service"
@@ -16,6 +17,15 @@ type AuthController struct {
 
 func NewAuthController(authService service.AuthService, logger *logrus.Logger) *AuthController {
     return &AuthController{authService: authService, logger: logger}
+}
+
+func (ctrl *AuthController) RegisterRoutes (rg *gin.RouterGroup){
+	authRoutes := rg.Group("/auth")
+	{
+        authRoutes.POST("/signup",ctrl.SignUp)
+        authRoutes.POST("login", ctrl.Login)
+        authRoutes.POST("/logout", ctrl.Logout)
+    }
 }
 
 
@@ -37,7 +47,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
         ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
         return
     }
-    token, err := c.authService.Login(ctx.Request.Context(), req.Email, req.Password)
+    token, err := c.authService.Login(ctx.Request.Context(),&req)
     if err != nil {
         ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
         return
@@ -45,30 +55,44 @@ func (c *AuthController) Login(ctx *gin.Context) {
     ctx.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-// Login godoc
+// Signup godoc
 // @Summary      User SignUp
-// @Description  Creates a new user 
+// @Description  Creates a new user and returns a JWT token (auto-login)
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        request body models.SignUpRequest true "signup credentials"
-// @Success      200 {object} map[string]string "token"
-// @Failure      400 {object} map[string]string "invalid request"
-// @Failure      401 {object} map[string]string "invalid credentials"
+// @Param        request body models.CreateUserRequest true "signup credentials"
+// @Success      201 {object} map[string]string "token"
+// @Failure      400 {object} map[string]string "invalid request body or validation error"
+// @Failure      409 {object} map[string]string "email already exists"
+// @Failure      500 {object} map[string]string "internal server error"
 // @Router       /auth/signup [post]
 func (c *AuthController) SignUp(ctx *gin.Context) {
-    var req models.LoginRequest
+    var req models.CreateUserRequest
     if err := ctx.ShouldBindJSON(&req); err != nil {
         c.logger.WithError(err).Warn("invalid Signup request")
         ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
         return
     }
-    token, err := c.authService.SignUp(ctx.Request.Context(), req.Email, req.Password)
+    err := c.authService.Signup(ctx,&req)
     if err != nil {
-        ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        c.logger.WithError(err).WithField("email", req.Email).Error("signup faieled")
+
+        if strings.Contains(err.Error(), "already exists"){
+            ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+            return
+        }
+
+        if strings.Contains(err.Error(), "invalid role") || strings.Contains(err.Error(), "password"){
+            ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error":"internal server error"})
+
         return
     }
-    ctx.JSON(http.StatusOK, gin.H{"token": token})
+
+    ctx.JSON(http.StatusCreated, gin.H{"message":"Signed up sucessfully"})
 }
 
 // Logout godoc
@@ -88,3 +112,4 @@ func (c *AuthController) Logout(ctx *gin.Context) {
     }
     ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
+

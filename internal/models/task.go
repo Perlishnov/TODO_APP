@@ -34,6 +34,7 @@ type UpdateTaskRequest struct {
 }
 
 type TaskFilter struct {
+    UserID   string `form:"user_id"`
     Status   string `form:"status"`
     Search   string `form:"search"`   // matches title or description
     Page     int    `form:"page"`
