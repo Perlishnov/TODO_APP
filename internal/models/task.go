@@ -6,8 +6,8 @@ type TaskStatus string
 
 const (
 	StatusTodo TaskStatus = "TODO"
-	StatusInprogess TaskStatus = "In Progress"
-	StatusDone TaskStatus = "Done"
+	StatusInprogess TaskStatus = "IN_PROGRESS"
+	StatusDone TaskStatus = "DONE"
 )
 
 

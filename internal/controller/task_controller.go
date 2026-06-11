@@ -90,7 +90,7 @@ func (ctrl *TaskController) Create(c *gin.Context) {
 
     // Because Create does not return the created task, we return a simple success message.
     // Optionally you could fetch the task by its generated ID if you need the full object.
-    c.JSON(http.StatusCreated, gin.H{"message": "task created"})
+    c.JSON(http.StatusCreated, gin.H{"message": "task created", "id": task.ID})
 }
 
 // List godoc
@@ -207,10 +207,16 @@ func (ctrl *TaskController) Update(c *gin.Context) {
     }
 
     task := &models.Task{
-        ID:          taskID,
-        Title:       *req.Title,
-        Description: *req.Description,
-        Status:      *req.Status,
+        ID: taskID,
+    }
+    if req.Title != nil {
+        task.Title = *req.Title
+    }
+    if req.Description != nil {
+        task.Description = *req.Description
+    }
+    if req.Status != nil {
+        task.Status = *req.Status
     }
 
     err := ctrl.taskService.Update(c.Request.Context(), task, userIDStr)

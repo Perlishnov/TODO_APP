@@ -24,9 +24,13 @@ func NewTaskDAOMongo(db *mongo.Database, logger *logrus.Logger) TaskDAO  {
 }
 
 func (d *TaskDAOMongo) GetById (ctx context.Context, id string) (*models.Task, error)  {
-	filter := bson.M{"_id": id}
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid task id format")
+	}
+	filter := bson.M{"_id": objID}
 	var task models.Task
-	err := d.collection.FindOne(ctx,filter).Decode(&task)
+	err = d.collection.FindOne(ctx,filter).Decode(&task)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments){
 			return nil, nil
@@ -53,7 +57,9 @@ func (d *TaskDAOMongo) List(ctx context.Context, filter *models.TaskFilter) ([]m
                 {"description": regex},
             }
         }
-        // If you need to filter by user, add: mongoFilter["user_id"] = filter.UserID
+        if filter.UserID != "" {
+            mongoFilter["user_id"] = filter.UserID
+        }
     }
 
     // Pagination
@@ -106,16 +112,23 @@ func (d *TaskDAOMongo) Create (ctx context.Context, task *models.Task) error  {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
 
-	_, err := d.collection.InsertOne(ctx, task)
+	result, err := d.collection.InsertOne(ctx, task)
 	if err != nil {
 		return fmt.Errorf("failed to create task: %w", err)
+	}
+	if oid, ok := result.InsertedID.(bson.ObjectID); ok {
+		task.ID = oid.Hex()
 	}
 	return nil
 }
 
 func (d *TaskDAOMongo) Update(ctx context.Context, task *models.Task) error {
 	task.UpdatedAt = time.Now()
-	filter := bson.M{"_id": task.ID}
+	objID, err := bson.ObjectIDFromHex(task.ID)
+	if err != nil {
+		return fmt.Errorf("invalid task id format")
+	}
+	filter := bson.M{"_id": objID}
 	update := bson.M{"$set": task}
 	result, err := d.collection.UpdateOne(ctx, filter, update)
 
@@ -130,7 +143,11 @@ func (d *TaskDAOMongo) Update(ctx context.Context, task *models.Task) error {
 }
 
 func (d *TaskDAOMongo) Delete(ctx context.Context, id string) error  {
-	filter := bson.M{"_id": id}
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("invalid task id format")
+	}
+	filter := bson.M{"_id": objID}
 	result, err := d.collection.DeleteOne(ctx, filter)
 
 	if err != nil {

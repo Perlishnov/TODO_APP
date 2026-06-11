@@ -43,12 +43,12 @@ func (s *taskService) Create(ctx context.Context, task *models.Task) error {
         return fmt.Errorf("description field cannot be empty")
     }
     // Validate status
-    validStatuses := map[string]bool{"todo": true, "in_progress": true, "done": true}
+    validStatuses := map[string]bool{"TODO": true, "IN_PROGRESS": true, "DONE": true}
     if !validStatuses[string(task.Status)] {
-        return fmt.Errorf("invalid status: must be one of todo, in_progress, done")
+        return fmt.Errorf("invalid status: must be one of TODO, IN_PROGRESS, DONE")
     }
-    // Enforce max 3 in‑progress tasks if status is "in_progress"
-    if task.Status == "in_progress" {
+    // Enforce max 3 in‑progress tasks if status is "IN_PROGRESS"
+    if task.Status == "IN_PROGRESS" {
         if err := utils.ValidateTaskLimit(ctx, s.taskDAO, task.UserID, string(task.Status)); err != nil {
             return err
         }
@@ -122,9 +122,9 @@ func (s *taskService) Update(ctx context.Context, task *models.Task, requestingU
 		return errors.New("access denied")
 	}
 
-	// If status is changing to "in_progress", enforce limit
-	if task.Status == "in_progress" && existing.Status != "in_progress" {
-		count, err := s.taskDAO.CountByUserAndStatus(ctx, existing.UserID, "in_progress")
+	// If status is changing to "IN_PROGRESS", enforce limit
+	if task.Status == "IN_PROGRESS" && existing.Status != "IN_PROGRESS" {
+		count, err := s.taskDAO.CountByUserAndStatus(ctx, existing.UserID, "IN_PROGRESS")
 		if err != nil {
 			return fmt.Errorf("failed to count in-progress tasks: %w", err)
 		}
