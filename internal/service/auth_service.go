@@ -33,11 +33,11 @@ func NewAuthService(userDAO dao.UserDAO, jwtUtil utils.JWTService, logger *logru
 }
 
 func (s *authService) Signup(ctx context.Context, request *models.CreateUserRequest) error {
-	
+
 	if request.Role != "" && request.Role != "user" && request.Role != "admin" {
-        return errors.New("role must be either 'user' or 'admin'")
-    }
-	
+		return errors.New("role must be either 'user' or 'admin'")
+	}
+
 	existing, err := s.userDAO.GetByEmail(ctx, request.Email)
 
 	if err != nil {

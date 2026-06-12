@@ -127,16 +127,16 @@ func TestTaskService_GetById(t *testing.T) {
 	logger.SetLevel(logrus.FatalLevel)
 
 	tests := []struct {
-		name            string
-		taskID          string
+		name             string
+		taskID           string
 		requestingUserID string
-		setupMocks      func(mockTaskDAO *mocks.TaskDAO)
-		expectedTask    *models.Task
-		expectedErr     string
+		setupMocks       func(mockTaskDAO *mocks.TaskDAO)
+		expectedTask     *models.Task
+		expectedErr      string
 	}{
 		{
-			name:            "success - user owns task",
-			taskID:          "task1",
+			name:             "success - user owns task",
+			taskID:           "task1",
 			requestingUserID: "user1",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				task := &models.Task{ID: "task1", UserID: "user1", Title: "My task", Description: "desc", Status: "TODO"}
@@ -146,8 +146,8 @@ func TestTaskService_GetById(t *testing.T) {
 			expectedErr:  "",
 		},
 		{
-			name:            "fail - task not found",
-			taskID:          "nonexistent",
+			name:             "fail - task not found",
+			taskID:           "nonexistent",
 			requestingUserID: "user1",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "nonexistent").Return(nil, nil)
@@ -155,8 +155,8 @@ func TestTaskService_GetById(t *testing.T) {
 			expectedErr: "task not found",
 		},
 		{
-			name:            "fail - access denied (task belongs to another user)",
-			taskID:          "task2",
+			name:             "fail - access denied (task belongs to another user)",
+			taskID:           "task2",
 			requestingUserID: "hacker",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "task2").Return(&models.Task{ID: "task2", UserID: "owner"}, nil)
@@ -164,8 +164,8 @@ func TestTaskService_GetById(t *testing.T) {
 			expectedErr: "access denied",
 		},
 		{
-			name:            "fail - GetById database error",
-			taskID:          "task3",
+			name:             "fail - GetById database error",
+			taskID:           "task3",
 			requestingUserID: "user3",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "task3").Return(nil, errors.New("db error"))
@@ -266,11 +266,11 @@ func TestTaskService_Update(t *testing.T) {
 	logger.SetLevel(logrus.FatalLevel)
 
 	tests := []struct {
-		name            string
-		task            *models.Task
+		name             string
+		task             *models.Task
 		requestingUserID string
-		setupMocks      func(mockTaskDAO *mocks.TaskDAO)
-		expectedErr     string
+		setupMocks       func(mockTaskDAO *mocks.TaskDAO)
+		expectedErr      string
 	}{
 		{
 			name: "success - update task (no status change to in_progress)",
@@ -318,8 +318,8 @@ func TestTaskService_Update(t *testing.T) {
 			expectedErr: "cannot have more than 3 tasks in progress",
 		},
 		{
-			name: "fail - task not found",
-			task: &models.Task{ID: "nonexistent"},
+			name:             "fail - task not found",
+			task:             &models.Task{ID: "nonexistent"},
 			requestingUserID: "user4",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "nonexistent").Return(nil, nil)
@@ -327,8 +327,8 @@ func TestTaskService_Update(t *testing.T) {
 			expectedErr: "task not found",
 		},
 		{
-			name: "fail - access denied (task belongs to another user)",
-			task: &models.Task{ID: "task4"},
+			name:             "fail - access denied (task belongs to another user)",
+			task:             &models.Task{ID: "task4"},
 			requestingUserID: "hacker",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				existing := &models.Task{ID: "task4", UserID: "owner"}
@@ -337,8 +337,8 @@ func TestTaskService_Update(t *testing.T) {
 			expectedErr: "access denied",
 		},
 		{
-			name: "fail - GetById database error",
-			task: &models.Task{ID: "task5"},
+			name:             "fail - GetById database error",
+			task:             &models.Task{ID: "task5"},
 			requestingUserID: "user5",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "task5").Return(nil, errors.New("db error"))
@@ -385,15 +385,15 @@ func TestTaskService_Delete(t *testing.T) {
 	logger.SetLevel(logrus.FatalLevel)
 
 	tests := []struct {
-		name            string
-		taskID          string
+		name             string
+		taskID           string
 		requestingUserID string
-		setupMocks      func(mockTaskDAO *mocks.TaskDAO)
-		expectedErr     string
+		setupMocks       func(mockTaskDAO *mocks.TaskDAO)
+		expectedErr      string
 	}{
 		{
-			name:            "success - user owns task",
-			taskID:          "task1",
+			name:             "success - user owns task",
+			taskID:           "task1",
 			requestingUserID: "user1",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "task1").Return(&models.Task{ID: "task1", UserID: "user1"}, nil)
@@ -402,8 +402,8 @@ func TestTaskService_Delete(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name:            "fail - task not found",
-			taskID:          "nonexistent",
+			name:             "fail - task not found",
+			taskID:           "nonexistent",
 			requestingUserID: "user1",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "nonexistent").Return(nil, nil)
@@ -411,8 +411,8 @@ func TestTaskService_Delete(t *testing.T) {
 			expectedErr: "task not found",
 		},
 		{
-			name:            "fail - access denied (task belongs to another user)",
-			taskID:          "task2",
+			name:             "fail - access denied (task belongs to another user)",
+			taskID:           "task2",
 			requestingUserID: "hacker",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "task2").Return(&models.Task{ID: "task2", UserID: "owner"}, nil)
@@ -420,8 +420,8 @@ func TestTaskService_Delete(t *testing.T) {
 			expectedErr: "access denied",
 		},
 		{
-			name:            "fail - GetById database error",
-			taskID:          "task3",
+			name:             "fail - GetById database error",
+			taskID:           "task3",
 			requestingUserID: "user3",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "task3").Return(nil, errors.New("db error"))
@@ -429,8 +429,8 @@ func TestTaskService_Delete(t *testing.T) {
 			expectedErr: "failed to get existing task",
 		},
 		{
-			name:            "fail - Delete database error",
-			taskID:          "task4",
+			name:             "fail - Delete database error",
+			taskID:           "task4",
 			requestingUserID: "user4",
 			setupMocks: func(mockTaskDAO *mocks.TaskDAO) {
 				mockTaskDAO.On("GetById", mock.Anything, "task4").Return(&models.Task{ID: "task4", UserID: "user4"}, nil)

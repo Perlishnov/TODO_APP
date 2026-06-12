@@ -35,29 +35,29 @@ func NewTaskService(taskDao dao.TaskDAO, jwtUtil utils.JWTService, logger *logru
 }
 
 func (s *taskService) Create(ctx context.Context, task *models.Task) error {
-    // Validate required fields
-    if task.Title == "" {
-        return fmt.Errorf("title field cannot be empty")
-    }
-    if task.Description == "" {
-        return fmt.Errorf("description field cannot be empty")
-    }
-    // Validate status
-    validStatuses := map[string]bool{"TODO": true, "IN_PROGRESS": true, "DONE": true}
-    if !validStatuses[string(task.Status)] {
-        return fmt.Errorf("invalid status: must be one of TODO, IN_PROGRESS, DONE")
-    }
-    // Enforce max 3 in‑progress tasks if status is "IN_PROGRESS"
-    if task.Status == "IN_PROGRESS" {
-        if err := utils.ValidateTaskLimit(ctx, s.taskDAO, task.UserID, string(task.Status)); err != nil {
-            return err
-        }
-    }
-    // Proceed with creation
-    if err := s.taskDAO.Create(ctx, task); err != nil {
-        return fmt.Errorf("failed to create task: %w", err)
-    }
-    return nil
+	// Validate required fields
+	if task.Title == "" {
+		return fmt.Errorf("title field cannot be empty")
+	}
+	if task.Description == "" {
+		return fmt.Errorf("description field cannot be empty")
+	}
+	// Validate status
+	validStatuses := map[string]bool{"TODO": true, "IN_PROGRESS": true, "DONE": true}
+	if !validStatuses[string(task.Status)] {
+		return fmt.Errorf("invalid status: must be one of TODO, IN_PROGRESS, DONE")
+	}
+	// Enforce max 3 in‑progress tasks if status is "IN_PROGRESS"
+	if task.Status == "IN_PROGRESS" {
+		if err := utils.ValidateTaskLimit(ctx, s.taskDAO, task.UserID, string(task.Status)); err != nil {
+			return err
+		}
+	}
+	// Proceed with creation
+	if err := s.taskDAO.Create(ctx, task); err != nil {
+		return fmt.Errorf("failed to create task: %w", err)
+	}
+	return nil
 }
 
 func (s *taskService) GetById(ctx context.Context, id, requestingUserID string) (*models.Task, error) {
