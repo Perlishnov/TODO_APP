@@ -8,64 +8,54 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/Perlishnov/TODO_APP/docs"
+	"github.com/Perlishnov/TODO_APP/pkg/database"
 	"github.com/Perlishnov/TODO_APP/wire"
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title TODO API
-// @version 1.0
-// @description This is a sample TODO API.
-// @host localhost:8080
-// @BasePath /api/v1
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
 func main() {
-	app, err := wire.InitApp()
-	if err != nil {
-		panic(err)
-	}
-	logger := app.Logger
+    app, err := wire.InitApp()
+    if err != nil {
+        panic(err)
+    }
+    logger := app.Logger
 
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
-	router.Use(gin.Recovery())
-	router.Use(gin.Logger())
+    // Create indexes (non‑fatal if they already exist, but fatal on other errors)
+    if err := database.SetupIndexes(app.DB, logger); err != nil {
+        logger.WithError(err).Fatal("failed to set up database indexes")
+    }
 
-	// Swagger endpoint
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+    gin.SetMode(gin.ReleaseMode)
+    router := gin.New()
+    router.Use(gin.Recovery())
+    router.Use(gin.Logger())
 
-	api := router.Group("/api/v1")
+    api := router.Group("/api/v1")
+    app.AuthController.RegisterRoutes(api)
+    authHandler := app.AuthMiddleware.Authenticate()
+    app.TaskController.RegisterRoutes(api, authHandler)
 
-	app.AuthController.RegisterRoutes(api)
+    srv := &http.Server{
+        Addr:    ":" + os.Getenv("SERVER_PORT"),
+        Handler: router,
+    }
 
-	authHandler := app.AuthMiddleware.Authenticate()
-	app.TaskController.RegisterRoutes(api, authHandler)
+    go func() {
+        logger.Infof("Server starting on port %s", os.Getenv("SERVER_PORT"))
+        if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+            logger.Fatalf("server failed: %v", err)
+        }
+    }()
 
-	srv := &http.Server{
-		Addr:    ":" + os.Getenv("SERVER_PORT"),
-		Handler: router,
-	}
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    <-quit
 
-	go func() {
-		logger.Infof("Server starting on port %s", os.Getenv("SERVER_PORT"))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatalf("server failed: %v", err)
-		}
-	}()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	logger.Info("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		logger.Errorf("forced shutdown: %v", err)
-	}
-	logger.Info("Server exited")
+    logger.Info("Shutting down server...")
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    if err := srv.Shutdown(ctx); err != nil {
+        logger.Errorf("forced shutdown: %v", err)
+    }
+    logger.Info("Server exited")
 }

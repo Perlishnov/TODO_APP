@@ -18,17 +18,17 @@ import (
 
 func InitApp() (*App, error) {
 	wire.Build(
-		config.Load, // returns (*Config, error)
+		config.Load,
 		provideLogger,
 		provideMongo,
-		provideJWTService, // returns JWTService
+		provideJWTService,
 		dao.NewUserDAO,
 		dao.NewTaskDAOMongo,
 		service.NewAuthService,
 		service.NewTaskService,
 		controller.NewAuthController,
 		controller.NewTaskController,
-		middleware.NewAuthMiddleware, // now accepts JWTService
+		middleware.NewAuthMiddleware,
 		newApp,
 	)
 	return nil, nil
@@ -43,14 +43,15 @@ func provideMongo(cfg *config.Config, logger *logrus.Logger) (*mongo.Database, e
 }
 
 func provideJWTService(cfg *config.Config) utils.JWTService {
-	return utils.NewJWTUtil(cfg) // *JWTUtil implements JWTService
+	return utils.NewJWTUtil(cfg)
 }
 
 type App struct {
-	AuthController *controller.AuthController
-	TaskController *controller.TaskController
-	AuthMiddleware *middleware.AuthMiddleware
-	Logger         *logrus.Logger
+	AuthController  *controller.AuthController
+	TaskController  *controller.TaskController
+	AuthMiddleware  *middleware.AuthMiddleware
+	Logger          *logrus.Logger
+	DB              *mongo.Database
 }
 
 func newApp(
@@ -58,11 +59,13 @@ func newApp(
 	taskCtrl *controller.TaskController,
 	authMW *middleware.AuthMiddleware,
 	logger *logrus.Logger,
+	db *mongo.Database,
 ) *App {
 	return &App{
 		AuthController: authCtrl,
 		TaskController: taskCtrl,
 		AuthMiddleware: authMW,
 		Logger:         logger,
+		DB:             db,
 	}
 }

@@ -38,7 +38,7 @@ func InitApp() (*App, error) {
 	taskService := service.NewTaskService(taskDAO, jwtService, logger)
 	taskController := controller.NewTaskController(taskService, logger)
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, logger)
-	app := newApp(authController, taskController, authMiddleware, logger)
+	app := newApp(authController, taskController, authMiddleware, logger, database)
 	return app, nil
 }
 
@@ -61,6 +61,7 @@ type App struct {
 	TaskController *controller.TaskController
 	AuthMiddleware *middleware.AuthMiddleware
 	Logger         *logrus.Logger
+	DB             *mongo.Database
 }
 
 func newApp(
@@ -68,11 +69,13 @@ func newApp(
 	taskCtrl *controller.TaskController,
 	authMW *middleware.AuthMiddleware,
 	logger *logrus.Logger,
+	db *mongo.Database,
 ) *App {
 	return &App{
 		AuthController: authCtrl,
 		TaskController: taskCtrl,
 		AuthMiddleware: authMW,
 		Logger:         logger,
+		DB:             db,
 	}
 }

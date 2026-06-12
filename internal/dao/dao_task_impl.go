@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Perlishnov/TODO_APP/internal/models"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -24,13 +25,9 @@ func NewTaskDAOMongo(db *mongo.Database, logger *logrus.Logger) TaskDAO {
 }
 
 func (d *TaskDAOMongo) GetById(ctx context.Context, id string) (*models.Task, error) {
-	objID, err := bson.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid task id format")
-	}
-	filter := bson.M{"_id": objID}
+	filter := bson.M{"_id": id}
 	var task models.Task
-	err = d.collection.FindOne(ctx, filter).Decode(&task)
+	err := d.collection.FindOne(ctx, filter).Decode(&task)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
@@ -111,6 +108,7 @@ func (d *TaskDAOMongo) List(ctx context.Context, filter *models.TaskFilter) ([]m
 func (d *TaskDAOMongo) Create(ctx context.Context, task *models.Task) error {
 	task.CreatedAt = time.Now()
 	task.UpdatedAt = time.Now()
+	task.ID = uuid.New().String()
 
 	result, err := d.collection.InsertOne(ctx, task)
 	if err != nil {
@@ -124,11 +122,7 @@ func (d *TaskDAOMongo) Create(ctx context.Context, task *models.Task) error {
 
 func (d *TaskDAOMongo) Update(ctx context.Context, task *models.Task) error {
 	task.UpdatedAt = time.Now()
-	objID, err := bson.ObjectIDFromHex(task.ID)
-	if err != nil {
-		return fmt.Errorf("invalid task id format")
-	}
-	filter := bson.M{"_id": objID}
+	filter := bson.M{"_id": task.ID}
 	update := bson.M{"$set": task}
 	result, err := d.collection.UpdateOne(ctx, filter, update)
 
@@ -143,20 +137,15 @@ func (d *TaskDAOMongo) Update(ctx context.Context, task *models.Task) error {
 }
 
 func (d *TaskDAOMongo) Delete(ctx context.Context, id string) error {
-	objID, err := bson.ObjectIDFromHex(id)
-	if err != nil {
-		return fmt.Errorf("invalid task id format")
-	}
-	filter := bson.M{"_id": objID}
-	result, err := d.collection.DeleteOne(ctx, filter)
-
-	if err != nil {
-		return fmt.Errorf("failed to delete task: %w", err)
-	}
-	if result.DeletedCount == 0 {
-		return fmt.Errorf("task with id %s not found", id)
-	}
-	return nil
+    filter := bson.M{"_id": id}
+    result, err := d.collection.DeleteOne(ctx, filter)
+    if err != nil {
+        return fmt.Errorf("failed to delete task: %w", err)
+    }
+    if result.DeletedCount == 0 {
+        return fmt.Errorf("task with id %s not found", id)
+    }
+    return nil
 }
 
 func (d *TaskDAOMongo) CountByUserAndStatus(ctx context.Context, userId string, status string) (int64, error) {
