@@ -11,23 +11,22 @@ import (
 )
 
 type AuthController struct {
-    authService service.AuthService
-    logger      *logrus.Logger
+	authService service.AuthService
+	logger      *logrus.Logger
 }
 
 func NewAuthController(authService service.AuthService, logger *logrus.Logger) *AuthController {
-    return &AuthController{authService: authService, logger: logger}
+	return &AuthController{authService: authService, logger: logger}
 }
 
-func (ctrl *AuthController) RegisterRoutes (rg *gin.RouterGroup){
+func (ctrl *AuthController) RegisterRoutes(rg *gin.RouterGroup) {
 	authRoutes := rg.Group("/auth")
 	{
-        authRoutes.POST("/signup",ctrl.SignUp)
-        authRoutes.POST("login", ctrl.Login)
-        authRoutes.POST("/logout", ctrl.Logout)
-    }
+		authRoutes.POST("/signup", ctrl.SignUp)
+		authRoutes.POST("login", ctrl.Login)
+		authRoutes.POST("/logout", ctrl.Logout)
+	}
 }
-
 
 // Login godoc
 // @Summary      User login
@@ -41,18 +40,18 @@ func (ctrl *AuthController) RegisterRoutes (rg *gin.RouterGroup){
 // @Failure      401 {object} map[string]string "invalid credentials"
 // @Router       /auth/login [post]
 func (c *AuthController) Login(ctx *gin.Context) {
-    var req models.LoginRequest
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        c.logger.WithError(err).Warn("invalid login request")
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-        return
-    }
-    token, err := c.authService.Login(ctx.Request.Context(),&req)
-    if err != nil {
-        ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-        return
-    }
-    ctx.JSON(http.StatusOK, gin.H{"token": token})
+	var req models.LoginRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		c.logger.WithError(err).Warn("invalid login request")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	token, err := c.authService.Login(ctx.Request.Context(), &req)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 // Signup godoc
@@ -68,31 +67,31 @@ func (c *AuthController) Login(ctx *gin.Context) {
 // @Failure      500 {object} map[string]string "internal server error"
 // @Router       /auth/signup [post]
 func (c *AuthController) SignUp(ctx *gin.Context) {
-    var req models.CreateUserRequest
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        c.logger.WithError(err).Warn("invalid Signup request")
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
-        return
-    }
-    err := c.authService.Signup(ctx,&req)
-    if err != nil {
-        c.logger.WithError(err).WithField("email", req.Email).Error("signup faieled")
+	var req models.CreateUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		c.logger.WithError(err).Warn("invalid Signup request")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+	err := c.authService.Signup(ctx, &req)
+	if err != nil {
+		c.logger.WithError(err).WithField("email", req.Email).Error("signup faieled")
 
-        if strings.Contains(err.Error(), "already exists"){
-            ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-            return
-        }
+		if strings.Contains(err.Error(), "already exists") {
+			ctx.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
 
-        if strings.Contains(err.Error(), "invalid role") || strings.Contains(err.Error(), "password"){
-            ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-            return
-        }
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error":"internal server error"})
+		if strings.Contains(err.Error(), "invalid role") || strings.Contains(err.Error(), "password") {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 
-        return
-    }
+		return
+	}
 
-    ctx.JSON(http.StatusCreated, gin.H{"message":"Signed up sucessfully"})
+	ctx.JSON(http.StatusCreated, gin.H{"message": "Signed up sucessfully"})
 }
 
 // Logout godoc
@@ -105,11 +104,10 @@ func (c *AuthController) SignUp(ctx *gin.Context) {
 // @Failure      500 {object} map[string]string "internal error"
 // @Router       /auth/logout [post]
 func (c *AuthController) Logout(ctx *gin.Context) {
-    token := ctx.GetHeader("Authorization")
-    if err := c.authService.Logout(token); err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
+	token := ctx.GetHeader("Authorization")
+	if err := c.authService.Logout(token); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
-

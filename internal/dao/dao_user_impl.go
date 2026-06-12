@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type UserDAOMongo struct{
+type UserDAOMongo struct {
 	collection *mongo.Collection
 }
 
@@ -23,10 +23,10 @@ func NewUserDAO(db *mongo.Database, logger *logrus.Logger) UserDAO {
 
 }
 
-func (d *UserDAOMongo) Create(ctx context.Context, user *models.User) error{
+func (d *UserDAOMongo) Create(ctx context.Context, user *models.User) error {
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
-	
+
 	_, err := d.collection.InsertOne(ctx, user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
@@ -38,13 +38,13 @@ func (d *UserDAOMongo) Create(ctx context.Context, user *models.User) error{
 	return nil
 }
 
-func (d *UserDAOMongo) GetByEmail(ctx context.Context, email string) (*models.User, error)  {
+func (d *UserDAOMongo) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 	filter := bson.M{"email": email}
 	err := d.collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil,nil
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
@@ -54,7 +54,7 @@ func (d *UserDAOMongo) GetByEmail(ctx context.Context, email string) (*models.Us
 func (d *UserDAOMongo) GetByID(ctx context.Context, id string) (*models.User, error) {
 	filter := bson.M{"_id": id}
 	var user models.User
-	err:= d.collection.FindOne(ctx, filter).Decode(&user)
+	err := d.collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil

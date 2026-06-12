@@ -1,0 +1,431 @@
+basePath: /api/v1
+definitions:
+  github_com_Perlishnov_TODO_APP_internal_models.CreateTaskRequest:
+    properties:
+      description:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.TaskStatus'
+        enum:
+        - TODO
+        - IN_PROGRESS
+        - DONE
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  github_com_Perlishnov_TODO_APP_internal_models.CreateUserRequest:
+    properties:
+      email:
+        example: jane@example.com
+        type: string
+      name:
+        example: Jane Smith
+        type: string
+      password:
+        example: secret123
+        minLength: 6
+        type: string
+      role:
+        enum:
+        - user
+        - admin
+        example: user
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  github_com_Perlishnov_TODO_APP_internal_models.LoginRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_Perlishnov_TODO_APP_internal_models.Task:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.TaskStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  github_com_Perlishnov_TODO_APP_internal_models.TaskStatus:
+    enum:
+    - TODO
+    - IN_PROGRESS
+    - DONE
+    type: string
+    x-enum-varnames:
+    - StatusTodo
+    - StatusInprogess
+    - StatusDone
+  github_com_Perlishnov_TODO_APP_internal_models.UpdateTaskRequest:
+    properties:
+      description:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.TaskStatus'
+        enum:
+        - TODO
+        - IN_PROGRESS
+        - DONE
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample TODO API.
+  title: TODO API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Logs out the user (client must discard token).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user and returns a JWT token (auto-login)
+      parameters:
+      - description: signup credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid request body or validation error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: email already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User SignUp
+      tags:
+      - auth
+  /tasks:
+    get:
+      description: Returns paginated list of tasks for the authenticated user
+      parameters:
+      - description: Filter by status (pending, in_progress, done)
+        in: query
+        name: status
+        type: string
+      - description: Search in title or description
+        in: query
+        name: search
+        type: string
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 10, max 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Sort field (title, created_at, updated_at, status)
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort direction (asc, desc)
+        in: query
+        name: sort_dir
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List user's tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Creates a task for the authenticated user
+      parameters:
+      - description: Task details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: too many in-progress tasks
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new task
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      description: Deletes a task (owner only)
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: access denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a task
+      tags:
+      - tasks
+    get:
+      description: Returns a single task if the user owns it
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.Task'
+        "401":
+          description: unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: access denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a task by ID
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing task (owner only)
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Perlishnov_TODO_APP_internal_models.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: access denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: too many in-progress tasks
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a task
+      tags:
+      - tasks
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

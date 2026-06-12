@@ -1,56 +1,71 @@
 package main
 
 import (
-    "context"
-    "net/http"
-    "os"
-    "os/signal"
-    "syscall"
-    "time"
+	"context"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-    "github.com/Perlishnov/TODO_APP/wire"
-    "github.com/gin-gonic/gin"
+	_ "github.com/Perlishnov/TODO_APP/docs"
+	"github.com/Perlishnov/TODO_APP/wire"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title TODO API
+// @version 1.0
+// @description This is a sample TODO API.
+// @host localhost:8080
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
-    app, err := wire.InitApp()
-    if err != nil {
-        panic(err)
-    }
-    logger := app.Logger
+	app, err := wire.InitApp()
+	if err != nil {
+		panic(err)
+	}
+	logger := app.Logger
 
-    gin.SetMode(gin.ReleaseMode)
-    router := gin.New()
-    router.Use(gin.Recovery())
-    router.Use(gin.Logger())
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(gin.Logger())
 
-    api := router.Group("/api/v1")
-    app.AuthController.RegisterRoutes(api)
+	// Swagger endpoint
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-    authHandler := app.AuthMiddleware.Authenticate()
-    app.TaskController.RegisterRoutes(api, authHandler)
+	api := router.Group("/api/v1")
 
-    srv := &http.Server{
-        Addr:    ":" + os.Getenv("SERVER_PORT"),
-        Handler: router,
-    }
+	app.AuthController.RegisterRoutes(api)
 
-    go func() {
-        logger.Infof("Server starting on port %s", os.Getenv("SERVER_PORT"))
-        if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-            logger.Fatalf("server failed: %v", err)
-        }
-    }()
+	authHandler := app.AuthMiddleware.Authenticate()
+	app.TaskController.RegisterRoutes(api, authHandler)
 
-    quit := make(chan os.Signal, 1)
-    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-    <-quit
+	srv := &http.Server{
+		Addr:    ":" + os.Getenv("SERVER_PORT"),
+		Handler: router,
+	}
 
-    logger.Info("Shutting down server...")
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-    if err := srv.Shutdown(ctx); err != nil {
-        logger.Errorf("forced shutdown: %v", err)
-    }
-    logger.Info("Server exited")
+	go func() {
+		logger.Infof("Server starting on port %s", os.Getenv("SERVER_PORT"))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatalf("server failed: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Errorf("forced shutdown: %v", err)
+	}
+	logger.Info("Server exited")
 }

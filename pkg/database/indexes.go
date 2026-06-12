@@ -9,39 +9,39 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type IndexConfig struct{
+type IndexConfig struct {
 	Collection string
-	Keys bson.D
-	Unique bool
-	Name string
+	Keys       bson.D
+	Unique     bool
+	Name       string
 }
 
 func SetupIndexes(db *mongo.Database, logger *logrus.Logger) error {
 	indexes := []IndexConfig{
 		{
 			Collection: "users",
-			Keys: bson.D{{Key: "email",Value: 1}},
-			Unique: true,
-			Name: "idx_users_email_unique",
+			Keys:       bson.D{{Key: "email", Value: 1}},
+			Unique:     true,
+			Name:       "idx_users_email_unique",
 		},
 		{
-            Collection: "tasks",
-            Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "status", Value: 1}},
-            Name:       "idx_tasks_user_status",
-        },
-        {
-            Collection: "tasks",
-            Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "created_at", Value: -1}},
-            Name:       "idx_tasks_user_created_at",
-        },
-        {
-            Collection: "tasks",
-            Keys:       bson.D{{Key: "status", Value: 1}},
-            Name:       "idx_tasks_status",
-        },
+			Collection: "tasks",
+			Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "status", Value: 1}},
+			Name:       "idx_tasks_user_status",
+		},
+		{
+			Collection: "tasks",
+			Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "created_at", Value: -1}},
+			Name:       "idx_tasks_user_created_at",
+		},
+		{
+			Collection: "tasks",
+			Keys:       bson.D{{Key: "status", Value: 1}},
+			Name:       "idx_tasks_status",
+		},
 	}
 
-	for _, idx := range indexes{
+	for _, idx := range indexes {
 		indexModel := mongo.IndexModel{
 			Keys: idx.Keys,
 		}
